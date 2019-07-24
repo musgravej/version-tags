@@ -1,4 +1,16 @@
 # Byte-compiled / optimized / DLL files
+*.dbf
+*.csv
+*.txt
+.idea/
+bak/
+config.ini
+*.db
+*.xlsx
+*.sublime-project
+*.sublime-workspace
+!notes.txt
+
 __pycache__/
 *.py[cod]
 *$py.class
