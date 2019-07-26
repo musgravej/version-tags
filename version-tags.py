@@ -51,7 +51,7 @@ class Tag:
 
         pdf.set_font('Arial', 'B', 18)
         pdf.set_xy(1 + x_offset, .5 + y_offset)
-        pdf.cell(3.25, 2, "", border=1)
+        pdf.cell(3.25, 2, "", border=0)
 
         pdf.set_y(pdf.get_y() + .1)
         pdf.set_x(pdf.get_x() + x_offset)
@@ -72,10 +72,17 @@ class Tag:
         pdf.set_y(pdf.get_y() + .4)
         pdf.set_x(pdf.get_x() + x_offset)
         pdf.set_font('Arial', 'B', 12)
-        pdf.cell(3.25, .2, "Tray total: {count}    {code} total: {total:,}".format(count=self.tray_max,
-                                                                                   code=self.code,
-                                                                                   total=self.count),
-                 align='C')
+
+        if tag_number + 1 == tag_obj.trays:
+            pdf.cell(3.25, .2, "Tray total: {count}    {code} total: {total:,}".format(count=self.leftover,
+                                                                                       code=self.code,
+                                                                                       total=self.count),
+                     align='C')
+        else:
+            pdf.cell(3.25, .2, "Tray total: {count}    {code} total: {total:,}".format(count=self.tray_max,
+                                                                                       code=self.code,
+                                                                                       total=self.count),
+                     align='C')
 
 
 def initialize_new_path(pth):
@@ -90,34 +97,43 @@ def process_tags():
     save_path = os.path.join(os.curdir, 'tags')
     initialize_new_path(save_path)
     files = [f for f in os.listdir(os.curdir) 
-             if f[-3:].upper() == 'TXT']
+             if f[-3:].upper() == 'TXT' and f != 'Count Report.txt']
 
     for f in files:
         code = Code()
         code.ask_questions()
         code.calculate_counts(f)
 
-        for print_code, count in code.code_dic.items():
+        with open('Count Report.txt', 'w+') as r:
+            r.write("Job #: {}\nMax {} per tray\n\n{:<10}{:>10}{:>8}\n".format(code.job_number,
+                                                                               code.tray_max,
+                                                                               'Code',
+                                                                               'Count',
+                                                                               'Trays'))
 
-            job_tag = Tag(print_code, count, code.job_number, code.tray_max)
+            for print_code, count in code.code_dic.items():
 
-            # print(job_tag.__dict__)
+                job_tag = Tag(print_code, count, code.job_number, code.tray_max)
 
-            if job_tag.trays == 1:
-                pdf = fpdf.FPDF('P', 'in', (8.5, 11))
-                pdf.set_margins(left=1, right=1, top=.5)
-                pdf.add_page()
-                job_tag.write_tag(pdf, job_tag, 1)
-                pdf.output(os.path.join(save_path, '{}.pdf'.format(print_code)), 'F')
-            else:
-                pdf = fpdf.FPDF('P', 'in', (8.5, 11))
-                pdf.set_auto_page_break(False)
-                pdf.set_margins(left=1, right=1, top=.5)
-                pdf.add_page()
-                for tag_number in range(job_tag.trays):
-                    offset = tag_number % 10
-                    job_tag.write_tag(pdf, job_tag, tag_number, offset)
-                pdf.output(os.path.join(save_path, '{}.pdf'.format(print_code)), 'F')
+                print(job_tag.__dict__)
+
+                if job_tag.trays == 1:
+                    pdf = fpdf.FPDF('P', 'in', (8.5, 11))
+                    pdf.set_margins(left=1, right=1, top=.5)
+                    pdf.add_page()
+                    job_tag.write_tag(pdf, job_tag, 0, 0)
+                    pdf.output(os.path.join(save_path, '{}.pdf'.format(print_code)), 'F')
+                else:
+                    pdf = fpdf.FPDF('P', 'in', (8.5, 11))
+                    pdf.set_auto_page_break(False)
+                    pdf.set_margins(left=1, right=1, top=.5)
+                    pdf.add_page()
+                    for tag_number in range(job_tag.trays):
+                        offset = tag_number % 10
+                        job_tag.write_tag(pdf, job_tag, tag_number, offset)
+                    pdf.output(os.path.join(save_path, '{}.pdf'.format(print_code)), 'F')
+
+                r.write("{:<10}{:>10,}{:>8,}\n".format(job_tag.code, job_tag.count, job_tag.trays))
 
 
 def main():
