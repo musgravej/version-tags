@@ -4,6 +4,7 @@
 *.txt
 .idea/
 bak/
+tags/
 config.ini
 *.db
 *.xlsx
