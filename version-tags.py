@@ -5,8 +5,6 @@ import fpdf
 import collections
 import time
 
-# TODO Make a single file for all tags
-# TODO Check code for condition where code qty is the same as tray max, or evenly divisible
 
 class Code:
     def __init__(self):
